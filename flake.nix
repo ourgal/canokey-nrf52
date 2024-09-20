@@ -10,7 +10,23 @@
     let
       pkgs = import nixpkgs {
         system = "x86_64-linux";
-        config.allowUnfree = true;
+        config = {
+          allowUnfree = true;
+          permittedInsecurePackages = [ "segger-jlink-qt4-796s" ];
+          segger-jlink.acceptLicense = true;
+        };
+        overlays = [
+          (final: prev: {
+            segger-jlink = prev.segger-jlink.overrideAttrs (_oldAttrs: rec {
+              version = "794e";
+              src = prev.fetchurl {
+                url = "https://www.segger.com/downloads/jlink/JLink_Linux_V${version}_x86_64.tgz";
+                hash = "sha256-g5HDBrofCzLTBu8iFHoOzrBw8pBrwr3sKvokcL6wkMg=";
+                curlOpts = "--data accept_license_agreement=accepted";
+              };
+            });
+          })
+        ];
       };
     in
     {
@@ -21,6 +37,7 @@
           pkgs.git
           pkgs.gcc-arm-embedded
           pkgs.nrf5-sdk
+          pkgs.nrfconnect
         ];
         shellHook = ''
           git submodule update --init --recursive
